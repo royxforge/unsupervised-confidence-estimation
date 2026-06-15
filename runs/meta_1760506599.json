@@ -1,0 +1,18 @@
+{
+  "timestamp": "2025-10-15 05:36:39",
+  "seed": 42,
+  "device": "cuda",
+  "cuda": true,
+  "torch_version": "2.8.0+cu126",
+  "args": {
+    "train_models": true,
+    "num_epochs": 100,
+    "run_ablations": true,
+    "id_dataset": "cifar10",
+    "ood_dataset": "cifar100",
+    "batch_size": 128,
+    "subset_size": null,
+    "id_data_root": null,
+    "ood_data_root": null
+  }
+}
