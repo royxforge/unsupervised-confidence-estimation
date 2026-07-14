@@ -303,7 +303,7 @@ If you use this work or build on the unsupervised confidence metric, please cite
   title        = {Unsupervised Confidence Estimation: Uncertainty Quantification and Unsupervised Confidence Estimation},
   author       = {Sourav Roy},
   year         = {2025},
-  note         = {Preprint. Available at: https://github.com/royxlead/unsupervised-confidence-estimation.git}
+  note         = {Preprint. Available at: https://github.com/royxforge/unsupervised-confidence-estimation.git}
 }
 ```
 
@@ -316,5 +316,5 @@ This project is licensed under the MIT License - see [LICENSE](./LICENSE) for de
 ---
 
 <p align="center">
-  <sub>Built by <a href="https://github.com/royxlead/unsupervised-confidence-estimation.git">Sourav Roy</a> · Founding AI/ML Engineer · Yuga AI</sub>
+  <sub>Built by <a href="https://github.com/royxforge">Sourav Roy</a> · Artificial Intelligence Engineer · Accure Inc.</sub>
 </p>
