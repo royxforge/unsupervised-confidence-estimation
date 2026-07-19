@@ -1,0 +1,20 @@
+cff-version: 1.2.0
+message: "If you use this software in your research, please cite it as below."
+authors:
+  - family-names: Roy
+    given-names: Sourav
+    email: royxforge@proton.me
+    orcid: ""
+title: "Unsupervised Confidence Estimation: Uncertainty Quantification and Unsupervised Confidence Estimation"
+version: 1.1.0
+date-released: 2026-07-20
+url: "https://github.com/royxforge/unsupervised-confidence-estimation"
+repository-code: "https://github.com/royxforge/unsupervised-confidence-estimation"
+license: MIT
+keywords:
+  - uncertainty quantification
+  - confidence estimation
+  - MC Dropout
+  - deep ensembles
+  - evidential deep learning
+  - out-of-distribution detection
