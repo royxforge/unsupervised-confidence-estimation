@@ -3,7 +3,7 @@ message: "If you use this software in your research, please cite it as below."
 authors:
   - family-names: Roy
     given-names: Sourav
-    email: royxforge@proton.me
+    email: royxforge@gmail.com
     orcid: ""
 title: "Unsupervised Confidence Estimation: Uncertainty Quantification and Unsupervised Confidence Estimation"
 version: 1.1.0
