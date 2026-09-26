@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-09-26
+
 ### Security
 
 - **Artefact loading is integrity-checked and restricted**: `evaluation_results.pkl` is verified against the committed `tests/artifacts.sha256` manifest and loaded with an allow-listed unpickler (numpy/collections/container builtins only), so running `pytest` can no longer execute arbitrary code from a tampered committed artefact.
