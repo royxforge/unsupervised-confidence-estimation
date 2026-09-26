@@ -1,0 +1,61 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "unsupervised-confidence-estimation"
+version = "0.1.0"
+description = "Unsupervised Confidence Estimation for Deep Learning"
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = [
+    "torch>=1.12",
+    "torchvision>=0.13",
+    "numpy>=1.21",
+    "scipy>=1.7",
+    "scikit-learn>=1.0",
+    "matplotlib>=3.5",
+    "tqdm>=4.64",
+    "pyyaml>=6.0",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+    "black>=22.0",
+    "ruff>=0.0.260",
+    "mypy>=1.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["uce*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py38"
+
+[tool.black]
+line-length = 100
+target-version = ["py38"]
+
+[tool.mypy]
+python_version = "3.8"
+warn_return_any = true
+warn_unused_configs = true
