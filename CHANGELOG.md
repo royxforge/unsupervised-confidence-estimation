@@ -20,7 +20,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [1.2.0] - 2026-07-20
 
 ### Added
 
@@ -28,15 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [1.1.0] - 2026-07-20
-
-### Added
-
-- **Community health files**: Added `CODE_OF_CONDUCT.md` (Contributor Covenant v2.1), `CONTRIBUTING.md` (contribution guidelines), `SECURITY.md` (vulnerability reporting policy), and `CITATION.cff` (citation metadata). These files establish project governance, community participation guidelines, and academic attribution framework.
-
----
-
-## [1.0.0] - 2026-07-14
+## [0.1.0] - 2026-07-14
 
 ### Added
 
@@ -63,6 +54,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Resolved file path inconsistencies where visualization assets were incorrectly nested under `ensemble_model/` rather than residing at the project root level.
 
-[1.2.0]: https://github.com/royxforge/unsupervised-confidence-estimation/releases/tag/v1.2.0
-[1.1.0]: https://github.com/royxforge/unsupervised-confidence-estimation/releases/tag/v1.1.0
-[1.0.0]: https://github.com/royxforge/unsupervised-confidence-estimation/releases/tag/v1.0.0
+[0.2.0]: https://github.com/royxforge/unsupervised-confidence-estimation/releases/tag/v0.2.0
+[0.1.0]: https://github.com/royxforge/unsupervised-confidence-estimation/releases/tag/v0.1.0
