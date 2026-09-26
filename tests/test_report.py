@@ -2,7 +2,56 @@
 
 from __future__ import annotations
 
+import hashlib
+import io
+import pickle
 from pathlib import Path
+
+import pytest
+
+_MANIFEST_NAME = "artifacts.sha256"
+
+# Only these modules may be reconstructed when reading committed artefacts.
+# Anything else (os, subprocess, builtins.eval...) is refused, so a tampered
+# artefact cannot execute code during `pytest`.
+_ALLOWED_PICKLE_MODULES = ("numpy", "numpy._core", "numpy.core")
+# Container-only modules: these reconstruct data, never execute arbitrary code.
+_ALLOWED_CONTAINER_MODULES = ("collections",)
+_ALLOWED_BUILTINS = {"dict", "list", "tuple", "set", "frozenset", "str", "bytes"}
+
+
+class _RestrictedUnpickler(pickle.Unpickler):
+    """Unpickler that refuses globals outside a small allowlist."""
+
+    def find_class(self, module: str, name: str):
+        if module == "builtins" and name in _ALLOWED_BUILTINS:
+            import builtins
+
+            return getattr(builtins, name)
+        if any(module == prefix or module.startswith(prefix + ".") for prefix in _ALLOWED_PICKLE_MODULES):
+            return super().find_class(module, name)
+        if module in _ALLOWED_CONTAINER_MODULES:
+            return super().find_class(module, name)
+        raise pickle.UnpicklingError(
+            f"Refusing to unpickle global {module}.{name} from a committed artefact"
+        )
+
+
+def _safe_pickle_load(path: Path):
+    """Load a trusted-by-checksum artefact without trusting arbitrary globals."""
+    return _RestrictedUnpickler(io.BytesIO(path.read_bytes())).load()
+
+
+def _manifest_hash(name: str) -> str | None:
+    """Return the expected sha256 for *name* from tests/artifacts.sha256."""
+    manifest = Path(__file__).with_name(_MANIFEST_NAME)
+    if not manifest.exists():
+        return None
+    for line in manifest.read_text(encoding="utf-8").splitlines():
+        parts = line.split()
+        if len(parts) == 2 and parts[1].lstrip("*") == name:
+            return parts[0]
+    return None
 
 
 class TestFinalReport:
@@ -26,9 +75,20 @@ class TestFinalReport:
         assert "MODEL PERFORMANCE SUMMARY" in text
 
     def test_contains_baseline_accuracy(self, final_report_path: Path):
+        """Baseline row exists with a plausible accuracy (no pinned literal).
+
+        Asserting the literal "91.14" made the test a copy of one stale run:
+        any legitimate recompute would fail, while a different (even wrong)
+        number would still have to be hand-edited in by whoever runs it.
+        """
+        import re
+
         text = final_report_path.read_text(encoding="utf-8")
         assert "BASELINE" in text
-        assert "91.14" in text
+        match = re.search(r"^BASELINE\s+(\d{1,3}\.\d+)", text, re.MULTILINE)
+        assert match, "BASELINE row with numeric accuracy not found"
+        accuracy = float(match.group(1))
+        assert 0.0 <= accuracy <= 100.0, f"Baseline accuracy {accuracy} out of range"
 
     def test_contains_unsupervised_metric_results(self, final_report_path: Path):
         text = final_report_path.read_text(encoding="utf-8")
@@ -58,9 +118,18 @@ class TestFinalReport:
             assert 0 <= val <= 100, f"Accuracy {val} out of range"
 
     def test_conference_ready_flag(self, final_report_path: Path):
-        """Report should be marked as conference-ready."""
+        """Readiness verdict present and well-formed, without pinning YES.
+
+        "CONFERENCE READY" is a self-attested conclusion; asserting YES
+        cements a claim this repo cannot recompute (there is no training or
+        evaluation code here to regenerate it from).
+        """
+        import re
+
         text = final_report_path.read_text(encoding="utf-8")
-        assert "CONFERENCE READY: YES" in text
+        assert re.search(r"CONFERENCE READY:\s*(YES|NO)", text), (
+            "Missing CONFERENCE READY: YES|NO flag"
+        )
 
     def test_report_has_conclusions(self, final_report_path: Path):
         text = final_report_path.read_text(encoding="utf-8")
@@ -135,10 +204,23 @@ class TestEvaluationResults:
         assert pkl_path.exists(), "evaluation_results.pkl not found"
 
     def test_evaluation_results_valid(self, project_root: Path):
-        import pickle
+        """Verify the artefact checksum, then load it with a restricted unpickler."""
         pkl_path = project_root / "evaluation_results.pkl"
-        data = pickle.loads(pkl_path.read_bytes())
+        expected = _manifest_hash(pkl_path.name)
+        assert expected is not None, f"{_MANIFEST_NAME} has no entry for {pkl_path.name}"
+        digest = hashlib.sha256(pkl_path.read_bytes()).hexdigest()
+        assert digest == expected, "evaluation_results.pkl does not match the committed checksum"
+        data = _safe_pickle_load(pkl_path)
         assert data is not None
+
+
+class TestRestrictedUnpickler:
+    """The artefact loader must refuse code-executing globals."""
+
+    def test_rejects_dangerous_globals(self):
+        payload = pickle.dumps(__import__("os").system)
+        with pytest.raises(pickle.UnpicklingError):
+            _RestrictedUnpickler(io.BytesIO(payload)).load()
 
 
 class TestImages:

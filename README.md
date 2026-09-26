@@ -5,7 +5,7 @@
   <img src="https://img.shields.io/badge/Python-3.9%2B-blue?style=flat-square&logo=python" />
   <img src="https://img.shields.io/badge/PyTorch-2.0%2B-EE4C2C?style=flat-square&logo=pytorch" />
   <img src="https://img.shields.io/badge/License-MIT-yellow?style=flat-square" />
-  <img src="https://img.shields.io/badge/Status-Conference%20Ready-brightgreen?style=flat-square" />
+  <img src="https://img.shields.io/badge/Status-Research%20Artefacts-lightgrey?style=flat-square" />
   <img src="https://img.shields.io/badge/Preprint-Available-9cf?style=flat-square" />
 </p>
 
@@ -43,6 +43,16 @@ This project provides:
 3. **Comprehensive ablation studies** validating every component of the proposed metric.
 
 **Benchmark:** CIFAR-10 (ID) vs CIFAR-100 (OOD) · 100 training epochs · 10 classes
+
+> **Reproducibility note (read before citing numbers).** This repository ships the
+> experiment *artefacts* — pretrained checkpoints, `final_report.txt`, figures — plus a
+> pytest suite that verifies artefact integrity (sha256 manifest + restricted pickle
+> loading). It does **not** ship the executable training/evaluation source:
+> `unsupervised_confidence_estimation.ipynb` contains only a placeholder
+> `main_pipeline()` (the original implementation was not part of this export).
+> Consequently the numbers in `final_report.txt` reflect the original run and **cannot
+> be regenerated from this repository as-is**; treat them as recorded results, not as
+> a reproducible benchmark, until the pipeline source is published.
 
 ---
 
@@ -219,7 +229,10 @@ unsupervised-confidence-estimation/
 
 ### Core Modules
 
-| Module | Role |
+> These are components of the *original notebook experiment*. They are **not**
+> importable modules in this repository (see the reproducibility note above).
+
+| Module (notebook) | Role |
 |---|---|
 | `DatasetManager` | CIFAR-10/100 loading, augmentation pipelines |
 | `BaselineModel` | MSP confidence estimation |
@@ -255,20 +268,28 @@ pip install torch torchvision
 
 ## Usage
 
-Open `unsupervised_confidence_estimation.ipynb` in Jupyter or VS Code and run cells sequentially. The `main_pipeline()` function orchestrates the full experiment.
+**What runs today (verified in CI):**
 
-```python
-models, results, unsupervised_results, evaluator = main_pipeline(
-    train_models=False,     # set True to retrain from scratch
-    num_epochs=100,
-    run_ablations=True,
-    id_dataset='cifar10',
-    ood_dataset='cifar100',
-    batch_size=128
-)
+```bash
+pytest tests            # artefact integrity: sha256 manifest + restricted unpickler,
+                        # report structure checks, checkpoint/figure presence
 ```
 
-**Flags:**
+**What does *not* run yet** — the training/evaluation pipeline. The notebook entry
+point is a placeholder:
+
+```python
+def main_pipeline(train_models=True, num_epochs=100, run_ablations=True, ...):
+    # ... (rest of the function remains the same) ...   # <- not implemented here
+    return models, results, unsupervised_results, evaluator
+```
+
+Calling it will raise `NameError`. To reproduce the experiments you must obtain the
+full pipeline source (not part of this export) or rewrite `main_pipeline()`.
+Pretrained checkpoints under `checkpoints/` and `ensemble_model/` are available for
+loading once the pipeline exists.
+
+**Flags (documented intent, effective once the pipeline source is restored):**
 - `train_models=False` - loads pretrained checkpoints from `checkpoints/`, skips retraining
 - `run_ablations=True` - runs full ablation suite on the unsupervised metric
 - `FAST_DEBUG_SUBSET=1` (env var) or `--smoke-test` flag - runs on a data subset for quick validation
