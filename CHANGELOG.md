@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Tests no longer pin the literal `91.14` accuracy or `CONFERENCE READY: YES`; the baseline test parses the `BASELINE` row and range-checks it (0-100), and the readiness test requires a well-formed `CONFERENCE READY: YES|NO` verdict. The known report inconsistency (baseline and ensemble rows identical to 4dp, conclusions contradicting the KEY FINDINGS table) is deliberately *not* hand-patched — there is no training/evaluation code in this repository to recompute those numbers from.
+- Tests no longer pin the literal `91.14` accuracy or `CONFERENCE READY: YES`; the baseline test parses the `BASELINE` row and range-checks it (0-100), and the readiness test requires a well-formed `CONFERENCE READY: YES|NO` verdict. The known report inconsistency (baseline and ensemble rows identical to 4dp, conclusions contradicting the KEY FINDINGS table) is deliberately *not* hand-patched -- there is no training/evaluation code in this repository to recompute those numbers from.
 - **README is honest about reproducibility**: the "Conference Ready" badge was replaced with "Research Artefacts", a reproducibility note states that `main_pipeline()` is a placeholder and `final_report.txt` numbers cannot be regenerated from this export, the Usage section documents what actually runs (`pytest tests`), and the Core Modules table is labelled as notebook-only components.
 
 ---

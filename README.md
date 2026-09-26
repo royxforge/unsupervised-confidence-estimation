@@ -45,7 +45,7 @@ This project provides:
 **Benchmark:** CIFAR-10 (ID) vs CIFAR-100 (OOD) · 100 training epochs · 10 classes
 
 > **Reproducibility note (read before citing numbers).** This repository ships the
-> experiment *artefacts* — pretrained checkpoints, `final_report.txt`, figures — plus a
+> experiment *artefacts* -- pretrained checkpoints, `final_report.txt`, figures -- plus a
 > pytest suite that verifies artefact integrity (sha256 manifest + restricted pickle
 > loading). It does **not** ship the executable training/evaluation source:
 > `unsupervised_confidence_estimation.ipynb` contains only a placeholder
@@ -275,7 +275,7 @@ pytest tests            # artefact integrity: sha256 manifest + restricted unpic
                         # report structure checks, checkpoint/figure presence
 ```
 
-**What does *not* run yet** — the training/evaluation pipeline. The notebook entry
+**What does *not* run yet** -- the training/evaluation pipeline. The notebook entry
 point is a placeholder:
 
 ```python
