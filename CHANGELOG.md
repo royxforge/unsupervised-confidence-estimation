@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Packaging metadata**: `pyproject.toml` had a malformed `version = "0.2.0""` line (stray quote) and `[tool.mypy] python_version` had been overwritten with the package version; both are corrected so the file parses.
+- **Version consistency**: `uce.__version__` reported `0.1.0` instead of the released `0.2.0`.
+- **ResNet `_make_layer` shadowing**: the loop variable reused the `stride` parameter name (flagged by linters); renamed to `s` with no behavioural change.
+
 ## [0.2.0] - 2026-09-26
 
 ### Security
