@@ -7,8 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-10-13
+
+### Added
+
+- **`uce.metrics`: the evaluation code the report was missing.** `src/uce/metrics/` implements every quantity in `final_report.txt` -- expected calibration error (15 equal-width bins), OOD detection AUROC and FPR@95, Spearman/Pearson correlation against the error indicator, top-quartile ("Q4") accuracy, risk-coverage/AURC, predictive entropy and mutual information, and Dirichlet confidence/vacuity. `tests/test_metrics.py` recomputes the committed metric values from the raw arrays in `evaluation_results.pkl`, so those numbers are now reproducible and gated instead of unverifiable.
+- **`python -m uce.cli report|verify`**: recompute the report tables from a results artefact (`--json` available), or check stored metrics against recomputed ones and exit non-zero on mismatch. The artefact loader reuses the restricted unpickler policy from `tests/test_report.py`.
+- **MC Dropout per-pass probabilities**: `ResNetCIFARWithDropout.mc_dropout_probs()` / `mc_dropout_logits()` expose the individual stochastic passes, which is what entropy and mutual information require; `mc_dropout_forward()` now returns logits (see Fixed).
+
 ### Fixed
 
+- **`ResNetCIFARWithDropout.forward` returned `None`**: the method ended without a `return` (a stray `return out` sat after the next method's `return`), so MC Dropout -- the best-calibrated method in the report -- could not produce logits at all. `tests/test_models.py` now covers the forward pass, the MC Dropout helpers and the committed checkpoints, since the repository previously had no model tests.
+- **MC Dropout helpers mutated model mode**: `mc_dropout_forward()` called `self.train()` and never restored the previous mode, silently leaving the network in training mode after a prediction. Both helpers now restore it.
+- **`uce.__all__` advertised non-existent submodules** (`data`, `training`, `evaluation`, `ablation`, `utils`), so `from uce import *` raised. It now lists only the modules that exist.
+- **`uce.models` did not export `load_pretrained`, `ResNet18` or `EvidentialResNet18`** even though the committed checkpoints are ResNet-18 models loaded through them.
 - **Packaging metadata**: `pyproject.toml` had a malformed `version = "0.2.0""` line (stray quote) and `[tool.mypy] python_version` had been overwritten with the package version; both are corrected so the file parses.
 - **Version consistency**: `uce.__version__` reported `0.1.0` instead of the released `0.2.0`.
 - **ResNet `_make_layer` shadowing**: the loop variable reused the `stride` parameter name (flagged by linters); renamed to `s` with no behavioural change.

@@ -204,13 +204,22 @@ Reliability diagrams measure calibration quality - a perfectly calibrated model 
 ```
 unsupervised-confidence-estimation/
 │
-├── unsupervised_confidence_estimation.ipynb   # Main pipeline notebook
+├── unsupervised_confidence_estimation.ipynb   # Main pipeline notebook (placeholder)
 ├── final_report.txt                              # Full quantitative results
 │
-├── checkpoints/                                  # Pretrained model weights
-│   ├── baseline_model.pth
-│   ├── mc_dropout_model.pth
-│   └── evidential_model.pth
+├── src/uce/
+│   ├── metrics/                                  # Metrics that recompute the report
+│   │   ├── calibration.py                        # ECE, reliability bins
+│   │   ├── ood.py                                # AUROC, FPR@95, entropy, mutual information
+│   │   ├── selective.py                          # Correlation, Q4 accuracy, risk-coverage
+│   │   └── evidential.py                         # Dirichlet confidence / vacuity
+│   ├── models/resnet.py                          # ResNet-18 + dropout + evidential variants
+│   └── cli.py                                    # `python -m uce.cli report|verify`
+│
+├── checkpoints/                                  # Pretrained model weights (ResNet-18)
+│   ├── baseline_best.pth
+│   ├── mcdropout_best.pth
+│   └── evidential_best.pth
 │
 ├── ensemble_model/                               # Ensemble member weights
 │   └── ensemble_model_*.pth
@@ -229,8 +238,11 @@ unsupervised-confidence-estimation/
 
 ### Core Modules
 
-> These are components of the *original notebook experiment*. They are **not**
-> importable modules in this repository (see the reproducibility note above).
+> `DatasetManager` .. `Visualizer` are components of the *original notebook
+> experiment* and are **not** importable modules in this repository (see the
+> reproducibility note above). The evaluation side of that table (`ECE, AUROC,
+> Spearman ρ, Q4 accuracy`) is now available as importable code in
+> `src/uce/metrics/` -- see "Recomputing the reported metrics".
 
 | Module (notebook) | Role |
 |---|---|
@@ -273,6 +285,12 @@ pip install torch torchvision
 ```bash
 pytest tests            # artefact integrity: sha256 manifest + restricted unpickler,
                         # report structure checks, checkpoint/figure presence
+
+# Recompute the report's metrics from the committed per-sample arrays
+python -m uce.cli report --results evaluation_results.pkl
+
+# ...and gate on them: exits 1 if the artefact disagrees with the metrics code
+python -m uce.cli verify --results evaluation_results.pkl
 ```
 
 **What does *not* run yet** -- the training/evaluation pipeline. The notebook entry
@@ -293,6 +311,44 @@ loading once the pipeline exists.
 - `train_models=False` - loads pretrained checkpoints from `checkpoints/`, skips retraining
 - `run_ablations=True` - runs full ablation suite on the unsupervised metric
 - `FAST_DEBUG_SUBSET=1` (env var) or `--smoke-test` flag - runs on a data subset for quick validation
+
+### Recomputing the reported metrics
+
+The numbers in `final_report.txt` are now reproducible from the committed
+`evaluation_results.pkl` (which stores the raw confidences, predictions and
+labels) using `uce.metrics`, without retraining anything:
+
+```bash
+$ python -m uce.cli report --results evaluation_results.pkl
+Method              Accuracy               ECE             AUROC             FPR95
+----------------------------------------------------------------------------------
+baseline             91.1400            0.0323            0.8549            0.7130
+mc_dropout           90.7800            0.0097            0.8531            0.6867
+evidential           91.6600            0.0742            0.8440            0.7319
+ensemble             91.1400            0.0323            0.8549            0.7130
+
+UNSUPERVISED METRIC PERFORMANCE
+Method         Spearman Corr       Q4 Accuracy
+----------------------------------------------
+baseline              0.4115           99.6800
+mc_dropout            0.4221           99.9200
+evidential            0.3708           98.6000
+ensemble              0.4127           99.6800
+```
+
+These match the committed report, and `pytest tests/test_metrics.py` re-derives
+them on every run. The definitions are pinned to the artefact rather than to a
+convention guess: ECE uses 15 equal-width bins, `ood_auroc` is the
+Mann-Whitney statistic with in-distribution as the positive class, `ood_fpr95`
+is the OOD false-positive rate at 95% TPR, the per-method correlation columns
+are taken against the error indicator (hence negative), and the unsupervised
+columns are taken against correctness using the composite `final_confidence`.
+
+`uce.metrics` also covers quantities the artefact does not contain, for use with
+the checkpoints in `checkpoints/`: predictive entropy and mutual information for
+MC Dropout (`model.mc_dropout_probs(...)` returns the per-pass probabilities they
+need), Dirichlet confidence/vacuity for the evidential models, and the
+risk-coverage curve and AURC for selective prediction.
 
 ---
 

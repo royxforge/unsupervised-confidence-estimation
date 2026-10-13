@@ -3,13 +3,13 @@
 from __future__ import annotations
 
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
+from torch import nn
 
 __all__ = [
+    "EvidentialResNet",
     "ResNetCIFAR",
     "ResNetCIFARWithDropout",
-    "EvidentialResNet",
     "create_model",
     "load_pretrained",
 ]
@@ -157,6 +157,7 @@ class ResNetCIFARWithDropout(ResNetCIFAR):
         out = self.avgpool(out)
         out = torch.flatten(out, 1)
         out = self.fc(out)
+        return out
 
     def get_features(self, x: torch.Tensor) -> torch.Tensor:
         """Extract penultimate features for contrastive/feature-space methods."""
@@ -168,28 +169,58 @@ class ResNetCIFARWithDropout(ResNetCIFAR):
         out = torch.flatten(out, 1)
         return out
 
-        return out
-
     def mc_dropout_forward(
         self, x: torch.Tensor, n_samples: int = 20
     ) -> tuple[torch.Tensor, torch.Tensor]:
         """
         Monte Carlo Dropout forward pass for uncertainty estimation.
 
+        Dropout is enabled for the duration of the call only: the model's
+        training/eval mode is restored afterwards, so a prediction helper
+        cannot silently leave the network in training mode.
+
         Returns:
             (mean_logits, variance_logits) over MC samples
         """
+        was_training = self.training
         self.train()  # Enable dropout
-        logits_list = []
-        with torch.no_grad():
-            for _ in range(n_samples):
-                logits = self.forward(x)
-                logits_list.append(logits)
+        try:
+            with torch.no_grad():
+                logits_stack = self.mc_dropout_logits(x, n_samples)
+        finally:
+            self.train(was_training)
 
-        logits_stack = torch.stack(logits_list, dim=1)  # (B, N, C)
         mean_logits = logits_stack.mean(dim=1)
         var_logits = logits_stack.var(dim=1)
         return mean_logits, var_logits
+
+    def mc_dropout_logits(self, x: torch.Tensor, n_samples: int = 20) -> torch.Tensor:
+        """Stacked logits from ``n_samples`` stochastic forward passes.
+
+        Returns:
+            Tensor of shape ``(B, n_samples, C)``. Keeping the individual passes
+            (rather than only their mean) is what makes entropy and mutual
+            information computable - see :mod:`uce.metrics.ood`.
+        """
+        logits_list = []
+        with torch.no_grad():
+            for _ in range(n_samples):
+                logits_list.append(self.forward(x))
+        return torch.stack(logits_list, dim=1)
+
+    def mc_dropout_probs(self, x: torch.Tensor, n_samples: int = 20) -> torch.Tensor:
+        """Per-pass class probabilities for MC dropout, shape ``(B, n_samples, C)``.
+
+        Feed the result to :func:`uce.metrics.mutual_information` for epistemic
+        uncertainty, or mean over the passes for the predictive distribution.
+        """
+        was_training = self.training
+        self.train()  # Enable dropout
+        try:
+            logits = self.mc_dropout_logits(x, n_samples)
+        finally:
+            self.train(was_training)
+        return torch.softmax(logits, dim=-1)
 
 
 
