@@ -6,11 +6,18 @@
   <img src="https://img.shields.io/badge/PyTorch-2.0%2B-EE4C2C?style=flat-square&logo=pytorch" />
   <img src="https://img.shields.io/badge/License-MIT-yellow?style=flat-square" />
   <img src="https://img.shields.io/badge/Status-Research%20Artefacts-lightgrey?style=flat-square" />
-  <img src="https://img.shields.io/badge/Preprint-Available-9cf?style=flat-square" />
+  <a href="https://github.com/royxforge/unsupervised-confidence-estimation/actions/workflows/ci.yml"><img src="https://github.com/royxforge/unsupervised-confidence-estimation/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
 </p>
 
-> **Can a neural network know when it doesn't know?**
-> This project benchmarks four uncertainty quantification paradigms and introduces a **novel unsupervised confidence metric** that estimates model reliability without ever using ground-truth labels - applicable across all UQ architectures.
+> **Can a neural network rank its own reliability without labels?**
+> This benchmarks four uncertainty paradigms (MSP, MC Dropout, Evidential, Deep Ensembles) on CIFAR-10 vs CIFAR-100 and reports a label-free confidence metric across all of them. **It is an artefact archive, not a runnable pipeline** — the training code is not in this export, so the numbers are a recorded run, reproducible at the metrics level from the committed per-sample arrays.
+>
+> **Result:** MC Dropout calibrates to **ECE 0.0097**, an order of magnitude better than the other three, while the label-free metric correlates with error at **ρ = 0.42** — enough to rank predictions, not enough to read as a probability.
+>
+> **Try it on CPU, no training:** `python -m uce.cli report --results evaluation_results.pkl`
+
+<img src="docs/demo.gif" alt="Terminal demo: uce.cli report recomputing every metric from evaluation_results.pkl" width="820" />
+
 
 ---
 
@@ -18,7 +25,7 @@
 
 - [Overview](#overview)
 - [Motivation](#motivation)
-- [Novel Contribution](#novel-contribution)
+- [Proposed Metric](#proposed-metric)
 - [Methods](#methods)
 - [Results](#results)
 - [Visualizations](#visualizations)
@@ -39,7 +46,7 @@ Standard neural networks are overconfident by design - their softmax outputs are
 This project provides:
 
 1. A **rigorous comparative evaluation** of four established UQ methods (MSP Baseline, MC Dropout, Evidential Deep Learning, Deep Ensembles) on CIFAR-10 (in-distribution) vs CIFAR-100 (out-of-distribution).
-2. A **novel unsupervised confidence metric** that estimates model confidence using only the model's own internal signals - no labels, no human annotation, no held-out data required.
+2. A **label-free confidence metric** that estimates model confidence using only the model's own internal signals - no labels, no human annotation, no held-out data required.
 3. **Comprehensive ablation studies** validating every component of the proposed metric.
 
 **Benchmark:** CIFAR-10 (ID) vs CIFAR-100 (OOD) · 100 training epochs · 10 classes
@@ -68,7 +75,7 @@ This project answers yes - and demonstrates it empirically across four different
 
 ---
 
-## Novel Contribution
+## Proposed Metric
 
 ### Unsupervised Confidence Metric
 
@@ -81,7 +88,7 @@ The proposed metric combines four label-free signals into a unified confidence s
 | **Feature Space Dispersion** | Spread of representations in the penultimate layer |
 | **Softmax Temperature Analysis** | Sharpness of the output distribution under temperature scaling |
 
-**Key result:** The metric achieves Spearman correlations of up to **ρ = 0.4221** with true model errors - without using a single label. Q4 accuracy (confidence in the top quartile of predictions) reaches **99.92%** under MC Dropout.
+**Key result:** The metric achieves Spearman correlations of up to **ρ = 0.4221** with true model errors - without using a single label. Read that magnitude honestly: ρ ≈ 0.42 is a weak-to-moderate rank correlation, enough to order predictions by reliability but not enough to read as a calibrated probability. Q4 accuracy (confidence in the top quartile of predictions) reaches **99.92%** under MC Dropout.
 
 | Method | Spearman ρ ↑ | Q4 Accuracy ↑ |
 |---|---|---|
@@ -251,7 +258,7 @@ unsupervised-confidence-estimation/
 | `MCDropoutModel` | Stochastic inference with dropout |
 | `EvidentialModel` | Dirichlet-based uncertainty output |
 | `DeepEnsemble` | Multi-model ensemble training and inference |
-| `UnsupervisedConfidenceMetric` | Novel label-free confidence estimation |
+| `UnsupervisedConfidenceMetric` | Label-free confidence estimation |
 | `ComprehensiveEvaluator` | ECE, AUROC, Spearman ρ, Q4 accuracy |
 | `AblationStudies` | Component-level ablations for the proposed metric |
 | `Visualizer` | All plots and reliability diagrams |
@@ -267,7 +274,7 @@ source .venv/bin/activate          # Linux/macOS
 .\.venv\Scripts\Activate.ps1       # Windows PowerShell
 
 # Install dependencies
-pip install numpy scipy scikit-learn matplotlib seaborn tqdm tensorboard
+pip install -e .        # editable install - required for `python -m uce.cli`, pulls numpy/scipy/scikit-learn/torch
 
 # Install PyTorch - match your CUDA version
 # See https://pytorch.org/get-started/locally/ for the right wheel
@@ -302,7 +309,7 @@ def main_pipeline(train_models=True, num_epochs=100, run_ablations=True, ...):
     return models, results, unsupervised_results, evaluator
 ```
 
-Calling it will raise `NameError`. To reproduce the experiments you must obtain the
+Calling it raises `NotImplementedError`. To reproduce the experiments you must obtain the
 full pipeline source (not part of this export) or rewrite `main_pipeline()`.
 Pretrained checkpoints under `checkpoints/` and `ensemble_model/` are available for
 loading once the pipeline exists.
@@ -374,7 +381,7 @@ Full ablation plots in `images/ablation_*.png`.
 
 ## Related Work
 
-- [Unified Time Series Foundation Model](https://github.com/royxforge/unified-time-series-foundation-model) - The per-horizon confidence calibration in UniTSFM's uncertainty-weighted ensemble shares methodology with the unsupervised confidence metric developed here.
+- [Unified Time Series Foundation Model](https://github.com/royxforge/uniftsm) - The per-horizon confidence calibration in UniTSFM's uncertainty-weighted ensemble shares methodology with the unsupervised confidence metric developed here.
 
 ---
 
@@ -386,8 +393,7 @@ If you use this work or build on the unsupervised confidence metric, please cite
 @misc{roy2025unsupervisedconfidenceestimation,
   title        = {Unsupervised Confidence Estimation: Uncertainty Quantification and Unsupervised Confidence Estimation},
   author       = {Sourav Roy},
-  year         = {2025},
-  note         = {Preprint. Available at: https://github.com/royxforge/unsupervised-confidence-estimation.git}
+  year         = {2025},  note        = {Research artefact and code: https://github.com/royxforge/unsupervised-confidence-estimation}
 }
 ```
 

@@ -1,3 +1,12 @@
 
 __pycache__/
 *.pyc
+
+# Virtual environments
+.venv/
+.venv-verify/
+.verify-venv/
+
+# Build artifacts
+*.egg-info/
+.eggs/
